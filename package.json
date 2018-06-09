@@ -1,0 +1,44 @@
+{
+  "name": "alex-mpa",
+  "version": "1.0.0",
+  "description": "Vue.js Meta Framework to create complex, fast & universal multipage application quickly.",
+  "main": "index.js",
+  "scripts": {
+    "build": "cross-env NODE_ENV=production rollup -c scripts/rollup/mpa.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pengjun1986/alex-mpa.git"
+  },
+  "keywords": [
+    "vue",
+    "vue.js",
+    "mpa"
+  ],
+  "author": "alex",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pengjun1986/alex-mpa/issues"
+  },
+  "homepage": "https://github.com/pengjun1986/alex-mpa#readme",
+  "bin": {
+    "mpa": "./bin/mpa"
+  },
+  "dependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-vue-app": "^2.0.0",
+    "lodash": "^4.17.10",
+    "webpack": "^4.12.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^8.2.3",
+    "babel-preset-env": "^1.7.0",
+    "cross-env": "^5.1.6",
+    "eslint": "^4.19.1",
+    "rollup": "^0.60.1",
+    "rollup-plugin-babel": "^3.0.4",
+    "rollup-plugin-commonjs": "^9.1.3",
+    "rollup-plugin-json": "^3.0.0"
+  }
+}
