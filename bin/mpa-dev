@@ -1,3 +1,60 @@
 #!/usr/bin/env node
-const { Builder } = require('..')
-Builder.generateHtml()
+const parseArgs = require('minimist')
+const consola = require('consola')
+
+const { Mpa, Builder } = require('..')
+const { loadMpaConfig } = require('./common/utils')
+
+const argv = parseArgs(process.argv.slice(2), {
+  alias: {
+    h: 'help',
+    H: 'hostname',
+    p: 'port',
+    c: 'config-file',
+    s: 'spa',
+    u: 'universal',
+    v: 'version'
+  },
+  boolean: ['h', 's', 'u', 'v'],
+  string: ['H', 'c'],
+  default: {
+    c: 'mpa.config.js'
+  }
+})
+
+// start dev
+let dev = startDev()
+
+function startDev (oldInstance) {
+  const onError = (err, instance) => {
+    consola.error(err)
+    return Promise.resolve(instance) // Wait for next reload
+  }
+
+  // Load options
+  let options = {}
+  try {
+    options = loadAndAugmentMpaConfig()
+  } catch (err) {
+    return onError(err, oldInstance)
+  }
+  let mpa
+  let builder
+  try {
+    mpa = new Mpa(options)
+    builder = new Builder(mpa)
+  } catch (err) {
+    return onError(err, oldInstance)
+  }
+  Promise.resolve().then(() => {
+    builder.generateHtml()
+  }).then(() => {
+    builder.generateRouters()
+  })
+}
+
+function loadAndAugmentMpaConfig() {
+  const options = loadMpaConfig(argv)
+  options.dev = true
+  return options
+}
