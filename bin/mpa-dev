@@ -3,7 +3,7 @@ const parseArgs = require('minimist')
 const consola = require('consola')
 
 const { Mpa, Builder } = require('..')
-const { loadMpaConfig } = require('./common/utils')
+const { getLatestHost, loadMpaConfig } = require('./common/utils')
 
 const argv = parseArgs(process.argv.slice(2), {
   alias: {
@@ -26,6 +26,9 @@ const argv = parseArgs(process.argv.slice(2), {
 let dev = startDev()
 
 function startDev (oldInstance) {
+  // Get latest environment variables
+  const { port, host } = getLatestHost(argv)
+
   const onError = (err, instance) => {
     consola.error(err)
     return Promise.resolve(instance) // Wait for next reload
@@ -38,6 +41,7 @@ function startDev (oldInstance) {
   } catch (err) {
     return onError(err, oldInstance)
   }
+
   let mpa
   let builder
   try {
@@ -46,11 +50,13 @@ function startDev (oldInstance) {
   } catch (err) {
     return onError(err, oldInstance)
   }
-  Promise.resolve().then(() => {
-    builder.generateHtml()
-  }).then(() => {
-    builder.generateRouters()
-  })
+  return (
+    Promise.resolve().then(() => {
+      builder.build()
+    }).then(() => {
+      return mpa.listen(port, host)
+    })
+  )
 }
 
 function loadAndAugmentMpaConfig() {
