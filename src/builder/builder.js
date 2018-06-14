@@ -3,8 +3,9 @@ import consola from 'consola'
 import fsExtra from 'fs-extra'
 import pify from 'pify'
 import Glob from 'glob'
+import webpack from 'webpack'
 
-import { getPages } from '../common/utils'
+import { r, getPages } from '../common/utils'
 import Options from '../common/options'
 
 import WebpackDevConfig from './webpack/dev'
@@ -18,9 +19,16 @@ export default class Builder {
     this.options = mpa.options
   }
   async build () {
+    // Create .mpa/, .mpa/components and .mpa/dist folders
+    await fsExtra.remove(r(this.options.buildDir), )
+    await fsExtra.mkdirp(r(this.options.buildDir, 'components'))
+    if (!this.options.dev) {
+      await fsExtra.mkdirp(r(this.options.buildDir, 'dist'))
+    }
     await this.generateHtml()
     await this.generateRouters()
-    await this.webpackBuild()
+    // const build = await this.webpackBuild()
+    return this
   }
   async getFiles () {
     const files = await glob(path.join(this.options.rootDir, 'pages' + '/**/*.vue'))
@@ -32,7 +40,30 @@ export default class Builder {
     const files = await this.getFiles()
     const pages = await getPages(files, this.options.rootDir, '/pages')
     console.log('pages =', pages)
-    const _path = this.options.rootDir + '/.mpa'
+    /*
+    const webpackDevConfig = new WebpackDevConfig(this)
+    webpack(webpackDevConfig, (err, stats) => {
+      if (err) throw err
+      process.stdout.write(stats.toString({
+        colors: true,
+        modules: false,
+        children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
+        chunks: false,
+        chunkModules: false
+      }) + '\n\n')
+
+      if (stats.hasErrors()) {
+        console.log(chalk.red('  Build failed with errors.\n'))
+        process.exit(1)
+      }
+
+      console.log(chalk.cyan('  Build complete.\n'))
+      console.log(chalk.yellow(
+        '  Tip: built files are meant to be served over an HTTP server.\n' +
+        '  Opening index.html over file:// won\'t work.\n'
+      ))
+    })
+    */
     // Ensure parent dir exits
     //await fsExtra.mkdirp(path.dirname(_path))
     Object.keys(pages).forEach(key => {
@@ -43,10 +74,12 @@ export default class Builder {
   // generate routers through *.vue files in folders under pages directory
   async generateRouters () {
     consola.start('----generate routers----')
+
+    consola.success('----generate routers----')
   }
 
   async webpackBuild() {
-    this.webpackCompile()
+    await this.webpackCompile()
   }
 
   webpackCompile(compiler) {

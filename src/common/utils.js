@@ -1,4 +1,5 @@
-const path = require('path')
+import path from 'path'
+import _ from 'lodash'
 
 export const getPages = (files, srcDir, pagesDir) => {
   let pages = {}
@@ -15,4 +16,28 @@ export const getPages = (files, srcDir, pagesDir) => {
     pages[pageName].routes.push(extPath.replace('.vue', ''))
   })
   return pages
+}
+
+export const isWindows = /^win/.test(process.platform)
+
+export const wp = function wp(p = '') {
+  /* istanbul ignore if */
+  if (isWindows) {
+    return p.replace(/\\/g, '\\\\')
+  }
+  return p
+}
+
+const reqSep = /\//g
+const sysSep = _.escapeRegExp(path.sep)
+const normalize = string => string.replace(reqSep, sysSep)
+
+export const r = function r() {
+  let args = Array.prototype.slice.apply(arguments)
+  let lastArg = _.last(args)
+
+  if (lastArg.indexOf('@') === 0 || lastArg.indexOf('~') === 0) {
+    return wp(lastArg)
+  }
+  return wp(path.resolve(...args.map(normalize)))
 }

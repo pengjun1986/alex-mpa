@@ -23,7 +23,6 @@ export default class Mpa {
           }
 
           const listenURL = chalk.underline.blue(`http://${host}:${port}`)
-          console.log(11)
           console.log(
             '\n' +
             chalk.bgGreen.black(' OPEN ') +
