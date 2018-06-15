@@ -10,12 +10,17 @@ export const getPages = (files, srcDir, pagesDir) => {
     const pageName = extPath.split(path.sep)[1]
     if (!pages[pageName]) {
       pages[pageName] = {
+        name: pageName,
         routes: []
       }
     }
-    pages[pageName].routes.push(extPath.replace('.vue', ''))
+    pages[pageName].routes.push(extPath.replace(path.sep + pageName + path.sep, '').replace('.vue', ''))
   })
-  return pages
+  const rsp = []
+  Object.keys(pages).forEach(key => {
+    rsp.push(pages[key])
+  })
+  return rsp
 }
 
 export const isWindows = /^win/.test(process.platform)

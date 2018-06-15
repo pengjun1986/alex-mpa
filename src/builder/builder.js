@@ -21,10 +21,14 @@ export default class Builder {
   async build () {
     // Create .mpa/, .mpa/components and .mpa/dist folders
     await fsExtra.remove(r(this.options.buildDir), )
-    await fsExtra.mkdirp(r(this.options.buildDir, 'components'))
     if (!this.options.dev) {
       await fsExtra.mkdirp(r(this.options.buildDir, 'dist'))
     }
+
+    // get the multi page foldert
+    const pages = await this.getAllPages()
+
+    await this.createModules(pages)
     await this.generateHtml()
     await this.generateRouters()
     // const build = await this.webpackBuild()
@@ -34,12 +38,14 @@ export default class Builder {
     const files = await glob(path.join(this.options.rootDir, 'pages' + '/**/*.vue'))
     return files
   }
+  async getAllPages () {
+    const files = await this.getFiles()
+    const pages = await getPages(files, this.options.rootDir, '/pages')
+    return pages
+  }
   // generate html through folders in pages directory
   async generateHtml () {
     consola.start('----generate html----')
-    const files = await this.getFiles()
-    const pages = await getPages(files, this.options.rootDir, '/pages')
-    console.log('pages =', pages)
     /*
     const webpackDevConfig = new WebpackDevConfig(this)
     webpack(webpackDevConfig, (err, stats) => {
@@ -66,10 +72,12 @@ export default class Builder {
     */
     // Ensure parent dir exits
     //await fsExtra.mkdirp(path.dirname(_path))
-    Object.keys(pages).forEach(key => {
-      //fsExtra.writeFile(this.options.rootDir + '/' + key, '11111', 'utf8')
-    })
     consola.success('----generate html----')
+  }
+  async createModules (pages) {
+    for (let page of pages) {
+      await fsExtra.mkdirsSync(r(this.options.buildDir, page.name))
+    }
   }
   // generate routers through *.vue files in folders under pages directory
   async generateRouters () {

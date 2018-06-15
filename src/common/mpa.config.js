@@ -2,5 +2,6 @@ export default {
   dev: true,
 
   // Dirs
-  buildDir: '.mpa'
+  buildDir: '.mpa',
+  hooks: null
 }
