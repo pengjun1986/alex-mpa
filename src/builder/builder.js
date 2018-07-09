@@ -1,7 +1,9 @@
 import path from 'path'
 import consola from 'consola'
+import hash from 'hash-sum'
 import fsExtra from 'fs-extra'
 import pify from 'pify'
+import _ from 'lodash'
 import Glob from 'glob'
 import webpack from 'webpack'
 
@@ -29,60 +31,62 @@ export default class Builder {
     const pages = await this.getAllPages()
 
     await this.createModules(pages)
-    await this.generateHtml()
-    await this.generateRouters()
+    await this.generateHtml(pages)
+    await this.generateRouters(pages)
     // const build = await this.webpackBuild()
     return this
   }
-  async getFiles () {
-    const files = await glob(path.join(this.options.rootDir, 'pages' + '/**/*.vue'))
-    return files
-  }
   async getAllPages () {
-    const files = await this.getFiles()
-    const pages = await getPages(files, this.options.rootDir, '/pages')
+    const allVueFiles = await glob('pages/**/*.vue', {
+      cwd: this.options.rootDir
+    })
+    const pages = await getPages(allVueFiles, this.options.rootDir, 'pages')
     return pages
   }
-  // generate html through folders in pages directory
-  async generateHtml () {
-    consola.start('----generate html----')
-    /*
-    const webpackDevConfig = new WebpackDevConfig(this)
-    webpack(webpackDevConfig, (err, stats) => {
-      if (err) throw err
-      process.stdout.write(stats.toString({
-        colors: true,
-        modules: false,
-        children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
-        chunks: false,
-        chunkModules: false
-      }) + '\n\n')
 
-      if (stats.hasErrors()) {
-        console.log(chalk.red('  Build failed with errors.\n'))
-        process.exit(1)
-      }
-
-      console.log(chalk.cyan('  Build complete.\n'))
-      console.log(chalk.yellow(
-        '  Tip: built files are meant to be served over an HTTP server.\n' +
-        '  Opening index.html over file:// won\'t work.\n'
-      ))
-    })
-    */
-    // Ensure parent dir exits
-    //await fsExtra.mkdirp(path.dirname(_path))
-    consola.success('----generate html----')
-  }
   async createModules (pages) {
+    consola.start('----generate modules----')
     for (let page of pages) {
       await fsExtra.mkdirsSync(r(this.options.buildDir, page.name))
     }
+    consola.success('----generate modules----')
   }
-  // generate routers through *.vue files in folders under pages directory
-  async generateRouters () {
-    consola.start('----generate routers----')
+  // generate html through folders in pages directory
+  async generateHtml (pages) {
+    consola.start('----generate html----')
+    const fileContent = await fsExtra.readFile(this.options.appTemplatePath, 'utf8')
+    for (let page of pages) {
+      await fsExtra.writeFile(path.join(this.options.buildDir, page.name + '.html'), fileContent, 'utf8')
+    }
+    consola.success('----generate html----')
+  }
 
+  // generate routers through *.vue files in folders under pages directory
+  async generateRouters (pages) {
+    consola.start('----generate routers----')
+    const fileContent = await fsExtra.readFile(path.resolve(this.options.appDir, 'router.js'), 'utf8')
+    for (let page of pages) {
+      let content
+      try {
+        const compiled = _.template(fileContent, {
+          imports: {
+            hash
+          }
+        })
+        content = compiled(
+          Object.assign({}, {
+            router: page.router
+          }, {
+            user: 'test'
+          })
+        )
+      } catch (err) {
+        /* istanbul ignore next */
+        throw new Error(`Could not compile template ${page.name}: ${err.message}`)
+      }
+      // Write file
+      await fsExtra.writeFile(path.join(this.options.buildDir, page.name, 'router.js'), content, 'utf8')
+    }
     consola.success('----generate routers----')
   }
 
